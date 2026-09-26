@@ -1,0 +1,38 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  check_java_latest:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          arch: arm64
+          runner: ubuntu-24.04-arm
+          expander_leg: ubuntu-latest--arm64
+    runs-on: ${{ matrix.runner }}
+    name: Java 25 [${{ matrix.expander_leg }}]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: 25
+        distribution: 'zulu'
+
+    - name: Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-jdk25-${{ hashFiles('**/*.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-jdk25
+
+    - name: Compile with Gradle
+      run: ./gradlew assemble
+
+    timeout-minutes: 150
